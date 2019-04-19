@@ -1,18 +1,18 @@
 # Set up Replica MongoDB in Docker
 
-###1. Pull Image
+### 1. Pull Image
 
 ```
 docker pull mongo
 ```
 
-###2. Create Network for Mongo
+### 2. Create Network for Mongo
 
 ```
 docker network create my-mongo-cluster
 ```
 
-###3. Starts Mongo1 replica
+### 3. Starts Mongo1 replica
 
 ```
 docker run \
@@ -22,7 +22,7 @@ docker run \
 mongo mongod --replSet my-mongo-set
 ```
 
-###4. Starts Mongo2-3
+### 4. Starts Mongo2-3
 
 ```
 $ docker run \
@@ -40,13 +40,13 @@ $ docker run \
 mongo mongod --replSet my-mongo-set
 ```
 
-###5. start Mongoshell for Configuration
+### 5. start Mongoshell for Configuration
 
 ```
 docker exec -it mongo1 mongo
 ```
 
-###6. Set up DB -> test is der name
+### 6. Set up DB -> test is der name
 
 ```javascript
 db = new Mongo('localhost:27017').getDB('test')
