@@ -1,6 +1,6 @@
 # Set up Replica MongoDB in Docker
 
-### 1. Pull Image
+### 1. Start Dockers
 
 ```
 docker-compose up -d
