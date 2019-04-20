@@ -25,7 +25,7 @@ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json"
 
 ```
 docker-compose exec broker kafka-topics --create --zookeeper \
-zookeeper:2181 --replication-factor 1 --partitions 1 --topic dbserver1.test.testC
+zookeeper:2181 --replication-factor 1 --partitions 1 --topic rs0.test.testC
 ```
 
 ## List Topic

@@ -1,35 +1,57 @@
 ---
 version: '3.5'
 services:
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:5.2.1
+  #   hostname: zookeeper
+  #   container_name: zookeeper
+  #   ports:
+  #     - "2181:2181"
+  #   networks:
+  #     - kafka-network
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
   zookeeper:
-    image: confluentinc/cp-zookeeper:5.2.1
-    hostname: zookeeper
-    container_name: zookeeper
+    image: wurstmeister/zookeeper:latest
     ports:
       - "2181:2181"
-    networks:
-      - kafka-network
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  broker:
-    image: confluentinc/cp-kafka:5.2.1
+  kafka:
     hostname: broker
     container_name: broker
-    depends_on:
-      - zookeeper
+    image: wurstmeister/kafka:2.11-1.1.1
     ports:
-      - "29092:29092"
       - "9092:9092"
-    networks:
-      - kafka-network
+    links:
+      - zookeeper
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-#     Macht kafka nach außen offen
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092
+      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: "topic-test:1:1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+#   broker:
+#     image: confluentinc/cp-kafka:5.2.1
+#     hostname: broker
+#     container_name: broker
+#     depends_on:
+#       - zookeeper
+#     ports:
+#       - "29092:29092"
+#       - "9092:9092"
+#     networks:
+#       - kafka-network
+#     environment:
+#       KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+#       KAFKA_BROKER_ID: 1
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+# #     Macht kafka nach außen offen
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092
 
   schema-registry:
     image: confluentinc/cp-schema-registry:5.2.1
@@ -37,7 +59,7 @@ services:
     container_name: schema-registry
     depends_on:
       - zookeeper
-      - broker
+      - kafka
     ports:
       - "8081:8081"
     networks:
@@ -50,7 +72,7 @@ services:
     image: confluentinc/cp-kafka-rest:5.2.1
     depends_on:
       - zookeeper
-      - broker
+      - kafka
       - schema-registry
     ports:
       - 8082:8082
@@ -74,7 +96,7 @@ services:
     container_name: connect
     depends_on:
       - zookeeper
-      - broker
+      - kafka
       - schema-registry
     # volumes:
     #   - ./jars:/usr/share/confluent-hub-components
@@ -110,37 +132,12 @@ services:
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
       # CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
 
-  # control-center:
-  #   image: confluentinc/cp-enterprise-control-center:5.2.1
-  #   hostname: control-center
-  #   container_name: control-center
-  #   depends_on:
-  #     - zookeeper
-  #     - broker
-  #     - schema-registry
-  #     - connect
-  #     - ksql-server
-  #   ports:
-  #     - "9021:9021"
-  #   environment:
-  #     CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
-  #     CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-  #     CONTROL_CENTER_CONNECT_CLUSTER: 'connect:8083'
-  #     CONTROL_CENTER_KSQL_URL: "http://ksql-server:8088"
-  #     CONTROL_CENTER_KSQL_ADVERTISED_URL: "http://localhost:8088"
-  #     CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
-  #     CONTROL_CENTER_REPLICATION_FACTOR: 1
-  #     CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-  #     CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-  #     CONFLUENT_METRICS_TOPIC_REPLICATION: 1
-  #     PORT: 9021
-
   ksql-server:
     image: confluentinc/cp-ksql-server:5.2.1
     hostname: ksql-server
     container_name: ksql-server
     depends_on:
-      - broker
+      - kafka
       - connect
     ports:
       - "8088:8088"
@@ -162,13 +159,28 @@ services:
     image: confluentinc/cp-ksql-cli:5.2.1
     container_name: ksql-cli
     depends_on:
-      - broker
+      - kafka
       - connect
       - ksql-server
     entrypoint: /bin/sh
     tty: true
     networks:
       - kafka-network
+  kafka-manager:
+    image: sheepkiller/kafka-manager:latest
+    container_name: kafka-manager
+    ports:
+      - "9000:9000"
+    links:
+      - zookeeper
+      - kafka
+    networks:
+        - kafka-network
+    environment:
+      ZK_HOSTS: zookeeper:2181
+      APPLICATION_SECRET: letmein
+      KM_ARGS: -Djava.net.preferIPv4Stack=true
+
 networks:
   kafka-network:
     name: kafka-network

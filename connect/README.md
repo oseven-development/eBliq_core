@@ -31,3 +31,9 @@ curl -X DELETE localhost:8083/connectors/ConnectorName
 ```
 curl -H "Accept:application/json" localhost:8083/connectors/ConnectorName
 ```
+
+# get Topic info
+
+```
+docker run -it --name watcher --rm --link zookeeper:zookeeper --link kafka:kafka debezium/kafka:0.9 watch-topic -a -k rs0.test.testC.
+```
