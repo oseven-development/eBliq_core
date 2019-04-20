@@ -1,0 +1,13 @@
+{
+  "name": "inventory-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+    "tasks.max": "1",
+    "mongodb.hosts": "rs0/127.0.0.1:30001",
+    "mongodb.name": "dbserver1",
+    "database.whitelist": "test[.]*",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+    "mongodb.members.auto.discover": "false"
+  }
+}
+!!!!! wie kann ich von docker in anderen docker connecten. localhost ist falsch muss falsch sein

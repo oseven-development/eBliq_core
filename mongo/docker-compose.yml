@@ -1,4 +1,4 @@
-version: "3"
+version: "3.5"
 services:
   mongo1:
     hostname: mongo1
@@ -6,24 +6,30 @@ services:
     image: mongo:4.0-xenial
     ports:
       - 30001:27017
+    networks:
+      - mongo-set
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=user
       - MONGO_INITDB_ROOT_PASSWORD=password
       - MONGO_INITDB_DATABASE=test
+
   mongo2:
     hostname: mongo2
     container_name: mongo2
     image: mongo:4.0-xenial
     ports:
       - 30002:27017
+    networks:
+      - mongo-set
     restart: always
     entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=user
       - MONGO_INITDB_ROOT_PASSWORD=password
       - MONGO_INITDB_DATABASE=test
+
   mongo3:
     hostname: mongo3
     container_name: mongo3
@@ -36,3 +42,9 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=user
       - MONGO_INITDB_ROOT_PASSWORD=password
       - MONGO_INITDB_DATABASE=test
+    networks:
+      - mongo-set
+networks:
+  mongo-set:
+    external:
+      name: kafka-network
