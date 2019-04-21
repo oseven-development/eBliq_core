@@ -1,62 +1,37 @@
 ---
 version: '3.5'
 services:
-  # zookeeper:
-  #   image: confluentinc/cp-zookeeper:5.2.1
-  #   hostname: zookeeper
-  #   container_name: zookeeper
-  #   ports:
-  #     - "2181:2181"
-  #   networks:
-  #     - kafka-network
-  #   environment:
-  #     ZOOKEEPER_CLIENT_PORT: 2181
-  #     ZOOKEEPER_TICK_TIME: 2000
   zookeeper:
-    image: wurstmeister/zookeeper:latest
-    ports:
-      - "2181:2181"
-  kafka:
-    hostname: broker
-    container_name: broker
-    image: wurstmeister/kafka:2.11-1.1.1
-    ports:
-      - "9092:9092"
-    links:
-      - zookeeper
+    container_name: kafka-zookeeper
+    # image: wurstmeister/zookeeper:latest
+    image: confluentinc/cp-zookeeper:latest
+    networks:
+      - kafka-network
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    container_name: kafka-broker
+    image: confluentinc/cp-kafka:latest
+    # image: wurstmeister/kafka:2.11-1.1.1
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+    networks:
+      - kafka-network
+    environment:
+      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_DELETE_TOPIC_ENABLE: 'true'
-      KAFKA_CREATE_TOPICS: "topic-test:1:1"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-
-#   broker:
-#     image: confluentinc/cp-kafka:5.2.1
-#     hostname: broker
-#     container_name: broker
-#     depends_on:
-#       - zookeeper
-#     ports:
-#       - "29092:29092"
-#       - "9092:9092"
-#     networks:
-#       - kafka-network
-#     environment:
-#       KAFKA_ADVERTISED_HOST_NAME: ${HOST_IP}
-#       KAFKA_BROKER_ID: 1
-#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-#       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-# #     Macht kafka nach außen offen
-#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   schema-registry:
+    container_name: kafka-schema-registry
     image: confluentinc/cp-schema-registry:5.2.1
-    hostname: schema-registry
-    container_name: schema-registry
     depends_on:
       - zookeeper
       - kafka
@@ -67,8 +42,9 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
-  
+
   rest-proxy:
+    container_name: kafka-rest
     image: confluentinc/cp-kafka-rest:5.2.1
     depends_on:
       - zookeeper
@@ -78,12 +54,10 @@ services:
       - 8082:8082
     networks:
       - kafka-network
-    hostname: rest-proxy
-    container_name: rest-proxy
     environment:
       KAFKA_REST_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_REST_HOST_NAME: rest-proxy
-      KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'kafka:29092'
       KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
 
@@ -92,8 +66,7 @@ services:
     build:
       context: ./connect
       dockerfile: dockerfile
-    hostname: connect
-    container_name: connect
+    container_name: kafka-connect
     depends_on:
       - zookeeper
       - kafka
@@ -105,7 +78,7 @@ services:
     networks:
       - kafka-network
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: 'broker:29092'
+      CONNECT_BOOTSTRAP_SERVERS: 'kafka:29092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: compose-connect-group
@@ -124,62 +97,9 @@ services:
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      # CONNECT_PLUGIN_PATH: '/etc/kafka-connect/jars'
-      # Assumes image is based on confluentinc/kafka-connect-datagen:latest which is pulling 5.1.1 Connect image
-      # CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-5.2.1.jar
-      # CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
-      # CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
-      # CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
 
-  ksql-server:
-    image: confluentinc/cp-ksql-server:5.2.1
-    hostname: ksql-server
-    container_name: ksql-server
-    depends_on:
-      - kafka
-      - connect
-    ports:
-      - "8088:8088"
-    networks:
-      - kafka-network
-    environment:
-      KSQL_CONFIG_DIR: "/etc/ksql"
-      KSQL_LOG4J_OPTS: "-Dlog4j.configuration=file:/etc/ksql/log4j-rolling.properties"
-      KSQL_BOOTSTRAP_SERVERS: "broker:29092"
-      KSQL_HOST_NAME: ksql-server
-      KSQL_APPLICATION_ID: "cp-all-in-one"
-      KSQL_LISTENERS: "http://0.0.0.0:8088"
-      KSQL_CACHE_MAX_BYTES_BUFFERING: 0
-      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
-      KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
-      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
 
-  ksql-cli:
-    image: confluentinc/cp-ksql-cli:5.2.1
-    container_name: ksql-cli
-    depends_on:
-      - kafka
-      - connect
-      - ksql-server
-    entrypoint: /bin/sh
-    tty: true
-    networks:
-      - kafka-network
-  kafka-manager:
-    image: sheepkiller/kafka-manager:latest
-    container_name: kafka-manager
-    ports:
-      - "9000:9000"
-    links:
-      - zookeeper
-      - kafka
-    networks:
-        - kafka-network
-    environment:
-      ZK_HOSTS: zookeeper:2181
-      APPLICATION_SECRET: letmein
-      KM_ARGS: -Djava.net.preferIPv4Stack=true
 
 networks:
   kafka-network:
