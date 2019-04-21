@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "ip": "^1.1.5",
+    "kafka-node": "^4.1.1",
     "kafkajs": "^1.7.0",
     "nodemon": "^1.18.11"
   }

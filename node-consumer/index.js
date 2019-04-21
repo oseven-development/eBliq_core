@@ -14,25 +14,31 @@ const consumer = kafka.consumer({ groupId: 'test-group' })
 
 const run = async () => {
   // Producing
-  await producer.connect()
-  await producer.send({
-    topic: 'topic-test',
-    messages: [{ value: 'Hello KafkaJS user!' }]
-  })
+  //   await producer.connect()
+  //   await producer.send({
+  //     topic: 'topic-test',
+  //     messages: [{ value: 'Hello KafkaJS user!' }]
+  //   })
 
   // Consuming
   await consumer.connect()
-  await consumer.subscribe({ topic: 'topic-test', fromBeginning: true })
-
-  await consumer.run({
+  await consumer.subscribe({
+    topic: 'dbserver1.test.testC',
+    fromBeginning: false
+  })
+  const dataArray = []
+  let c
+  const x = await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      console.log({
-        partition,
-        offset: message.offset,
-        value: message.value.toString()
-      })
+      console.log('in messeage')
+      console.log(message.value.toString('utf8'))
+      let c = message.value.toString('utf8')
+      dataArray.push(message)
+      return message
     }
   })
+  console.log('nach allem')
+  console.log(c)
 }
 
 run().catch(console.error)
