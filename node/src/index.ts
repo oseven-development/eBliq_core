@@ -28,7 +28,7 @@ app.get('/get', function(req, res) {
   let data
   res.writeHead(200, SSE_RESPONSE_HEADER)
 
-  res.write(`data: ${JSON.stringify({name: 'test'})}\n\n`)
+  res.write(`data: los gehts\n\n`)
 
   consumer.connect()
   consumer
@@ -40,7 +40,6 @@ app.get('/get', function(req, res) {
       /* JSON converter */
       // console.log(data)
       // console.log(data.value.toString())
-      console.log(users)
       // console.log('tostring value ')
       const exdata = JSON.parse(data.value.toString())
       let resdata: any
