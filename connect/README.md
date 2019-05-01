@@ -1,6 +1,6 @@
 # Infos for custom-connector docker
 
-## Connector directory
+## Connector directory in docker
 
 ```
 /usr/share/confluent-hub-components
