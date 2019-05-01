@@ -78,7 +78,11 @@ consumer.connect()
 
 consumer
   .on('ready', function() {
-    consumer.subscribe(['dbserver1.test.testC'])
+    consumer.subscribe([
+      'dbserver1.test.testC',
+      'dbserver1.demo.order',
+      'dbserver1.test.ab'
+    ])
 
     // Consume from the librdtesting-01 topic. This is what determines
     // the mode we are running in. By not specifying a callback (or specifying
@@ -96,12 +100,19 @@ consumer
     // console.log(typeof data)
     // console.log('raw')
     // console.log(data)
-    console.log('tostring value')
-    console.log(data.value.toString())
+    // console.log('tostring value')
+    // console.log(data.value.toString())
 
     /* JSON converter */
-    // console.log('tostring value ')
-    // exdata = JSON.parse(data.value.toString())
-    // resdata = JSON.parse(exdata.payload.after)
-    // console.log(resdata)
+    console.log(data)
+    console.log(data.value.toString())
+
+    console.log('tostring value ')
+    const exdata = JSON.parse(data.value.toString())
+    let resdata
+    exdata.payload.after !== null
+      ? (resdata = JSON.parse(exdata.payload.after))
+      : (resdata = JSON.parse(exdata.payload.patch))
+
+    console.log(resdata)
   })

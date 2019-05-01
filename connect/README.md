@@ -37,3 +37,12 @@ curl -H "Accept:application/json" localhost:8083/connectors/ConnectorName
 ```
 docker run -it --name watcher --rm --link zookeeper:zookeeper --link kafka:kafka debezium/kafka:0.9 watch-topic -a -k rs0.test.testC.
 ```
+
+## Info
+
+- Connector pro Database, dank whitecard
+- topic pro tabelle / collection
+  - topic name = Instantz.databaseName.Collection
+    - Instantz = name aus json
+    - Databasname = name aus json
+    - Collection = name aus Datenbank
