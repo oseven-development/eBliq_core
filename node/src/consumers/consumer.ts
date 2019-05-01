@@ -1,5 +1,5 @@
 /** @format */
-const Kafka = require('node-rdkafka')
+import * as Kafka from 'node-rdkafka'
 import config from './config'
 import topics from './topic'
 var consumer = new Kafka.KafkaConsumer(config, {})
