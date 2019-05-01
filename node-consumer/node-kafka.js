@@ -5,9 +5,10 @@ consumer = new Consumer(
   client,
   [{ topic: 'dbserver1.test.testC', partition: 0 }],
   {
-    autoCommit: false
+    autoCommit: true
   }
 )
+console.log('is running')
 consumer.on('message', function(message) {
   console.log(message)
 })

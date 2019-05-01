@@ -24,7 +24,7 @@ const run = async () => {
   await consumer.connect()
   await consumer.subscribe({
     topic: 'dbserver1.test.testC',
-    fromBeginning: false
+    fromBeginning: true
   })
   const dataArray = []
   let c
