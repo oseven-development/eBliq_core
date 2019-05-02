@@ -4,6 +4,8 @@ import {_consume} from './consumers/consumer'
 import * as Kafka from 'node-rdkafka'
 import config from './consumers/config'
 import topics from './consumers/topic'
+var cors = require('cors')
+
 var consumer = new Kafka.KafkaConsumer(config, {})
 import * as express from 'express'
 const app = express()
@@ -15,6 +17,8 @@ const SSE_RESPONSE_HEADER = {
   'X-Accel-Buffering': 'no',
 }
 var users = {}
+
+app.use(cors())
 
 app.get('/', function(req, res) {
   res.send('Hello World!')
@@ -46,7 +50,7 @@ app.get('/get', function(req, res) {
       exdata.payload.after !== null
         ? (resdata = JSON.parse(exdata.payload.after))
         : (resdata = JSON.parse(exdata.payload.patch))
-
+      console.log(resdata)
       res.write(`data: ${JSON.stringify(resdata)}\n\n`)
     })
 
